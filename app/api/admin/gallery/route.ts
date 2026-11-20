@@ -9,7 +9,11 @@ const galleryImageSchema = z.object({
   description: z.string().optional().nullable(),
   altText: z.string().optional().nullable(),
   category: z.string().optional().nullable(),
-  albumId: z.string().optional().nullable(),
+  albumId: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => (val && val.trim() !== "" ? val.trim() : null)),
   displayOrder: z.number().int().default(0),
   status: z.enum(["draft", "published"]).default("published"),
 });

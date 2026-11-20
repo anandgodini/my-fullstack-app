@@ -105,10 +105,15 @@ export default function BlogEditorForm({ initialData, isEdit }: BlogEditorProps)
       const url = isEdit ? `/api/admin/blogs/${initialData.id}` : "/api/admin/blogs";
       const method = isEdit ? "PUT" : "POST";
 
+      const payload = {
+        ...formData,
+        categoryId: formData.categoryId && formData.categoryId.trim() !== "" ? formData.categoryId : null,
+      };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const json = await res.json();

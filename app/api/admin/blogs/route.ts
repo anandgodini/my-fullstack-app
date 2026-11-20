@@ -10,7 +10,11 @@ const blogSchema = z.object({
   content: z.string().min(1, "Content is required"),
   featuredImage: z.string().optional().nullable(),
   imageAltText: z.string().optional().nullable(),
-  categoryId: z.string().optional().nullable(),
+  categoryId: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => (val && val.trim() !== "" ? val.trim() : null)),
   authorName: z.string().optional().default("Admin"),
   seoTitle: z.string().optional().nullable(),
   seoDescription: z.string().optional().nullable(),
@@ -88,7 +92,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { tags, publishedAt, ...data } = parsed.data;
+    const { tags, publishedAt, categoryId, ...data } = parsed.data;
 
     // Check unique slug
     const existing = await prisma.blog.findUnique({ where: { slug: data.slug } });
@@ -96,12 +100,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "A blog post with this slug already exists" }, { status: 400 });
     }
 
+    // Verify category exists if provided
+    let validCategoryId: string | null = null;
+    if (categoryId) {
+      const cat = await prisma.blogCategory.findUnique({ where: { id: categoryId } });
+      if (cat) validCategoryId = cat.id;
+    }
+
+    // Verify tag IDs exist
+    let validTagIds: string[] = [];
+    if (tags && tags.length > 0) {
+      const existingTags = await prisma.blogTag.findMany({
+        where: { id: { in: tags } },
+        select: { id: true },
+      });
+      validTagIds = existingTags.map((t) => t.id);
+    }
+
     const blog = await prisma.blog.create({
       data: {
         ...data,
+        categoryId: validCategoryId,
         publishedAt: data.status === "published" && !publishedAt ? new Date() : (publishedAt ? new Date(publishedAt) : null),
-        tags: tags && tags.length > 0 ? {
-          create: tags.map((tagId) => ({
+        tags: validTagIds.length > 0 ? {
+          create: validTagIds.map((tagId) => ({
             tag: { connect: { id: tagId } },
           })),
         } : undefined,

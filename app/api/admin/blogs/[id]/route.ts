@@ -10,7 +10,11 @@ const blogSchema = z.object({
   content: z.string().min(1, "Content is required"),
   featuredImage: z.string().optional().nullable(),
   imageAltText: z.string().optional().nullable(),
-  categoryId: z.string().optional().nullable(),
+  categoryId: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => (val && val.trim() !== "" ? val.trim() : null)),
   authorName: z.string().optional().default("Admin"),
   seoTitle: z.string().optional().nullable(),
   seoDescription: z.string().optional().nullable(),
@@ -63,7 +67,7 @@ export async function PUT(
       );
     }
 
-    const { tags, publishedAt, ...data } = parsed.data;
+    const { tags, publishedAt, categoryId, ...data } = parsed.data;
 
     // Check slug collision
     const existing = await prisma.blog.findUnique({ where: { slug: data.slug } });
@@ -71,7 +75,24 @@ export async function PUT(
       return NextResponse.json({ success: false, message: "A blog post with this slug already exists" }, { status: 400 });
     }
 
-    // Update tags with transaction or delete/create
+    // Verify category exists if provided
+    let validCategoryId: string | null = null;
+    if (categoryId) {
+      const cat = await prisma.blogCategory.findUnique({ where: { id: categoryId } });
+      if (cat) validCategoryId = cat.id;
+    }
+
+    // Verify tag IDs exist
+    let validTagIds: string[] = [];
+    if (tags && tags.length > 0) {
+      const existingTags = await prisma.blogTag.findMany({
+        where: { id: { in: tags } },
+        select: { id: true },
+      });
+      validTagIds = existingTags.map((t) => t.id);
+    }
+
+    // Update tags with transaction
     await prisma.$transaction(async (tx) => {
       await tx.blogTagRelation.deleteMany({ where: { blogId: id } });
 
@@ -79,9 +100,10 @@ export async function PUT(
         where: { id },
         data: {
           ...data,
+          categoryId: validCategoryId,
           publishedAt: publishedAt ? new Date(publishedAt) : (data.status === "published" ? new Date() : null),
-          tags: tags && tags.length > 0 ? {
-            create: tags.map((tId) => ({
+          tags: validTagIds.length > 0 ? {
+            create: validTagIds.map((tId) => ({
               tag: { connect: { id: tId } },
             })),
           } : undefined,

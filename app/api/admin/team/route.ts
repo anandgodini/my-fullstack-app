@@ -7,7 +7,11 @@ const teamMemberSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
   profilePhoto: z.string().optional().nullable(),
   designation: z.string().min(1, "Designation is required"),
-  departmentId: z.string().optional().nullable(),
+  departmentId: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => (val && val.trim() !== "" ? val.trim() : null)),
   bio: z.string().optional().nullable(),
   email: z.string().email("Valid email required").optional().or(z.literal("")).nullable(),
   phone: z.string().optional().nullable(),

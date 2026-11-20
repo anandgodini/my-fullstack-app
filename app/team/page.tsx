@@ -11,18 +11,27 @@ export const metadata = {
 };
 
 export default async function PublicTeamPage() {
-  const [members, departments] = await Promise.all([
-    prisma.teamMember.findMany({
-      where: { isActive: true },
-      orderBy: { displayOrder: "asc" },
-      include: { department: true },
-    }),
-    prisma.teamDepartment.findMany({
-      where: { status: "active" },
-      orderBy: { displayOrder: "asc" },
-      include: { _count: { select: { members: true } } },
-    }),
-  ]);
+  let members: any[] = [];
+  let departments: any[] = [];
+
+  try {
+    const data = await Promise.all([
+      prisma.teamMember.findMany({
+        where: { isActive: true },
+        orderBy: { displayOrder: "asc" },
+        include: { department: true },
+      }),
+      prisma.teamDepartment.findMany({
+        where: { status: "active" },
+        orderBy: { displayOrder: "asc" },
+        include: { _count: { select: { members: true } } },
+      }),
+    ]);
+    members = data[0];
+    departments = data[1];
+  } catch (e) {
+    console.warn("PublicTeamPage: Failed to load from database", e);
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 antialiased">

@@ -15,6 +15,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
+import { uploadFiles } from "@/src/lib/mediaUpload";
 
 export default function MediaLibraryPage() {
   const [mediaList, setMediaList] = useState<any[]>([]);
@@ -48,27 +49,19 @@ export default function MediaLibraryPage() {
     if (!files || files.length === 0) return;
 
     setUploading(true);
-    const formData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-      formData.append("files", files[i]);
-    }
-
     try {
-      const res = await fetch("/api/admin/media", {
-        method: "POST",
-        body: formData,
-      });
-      const json = await res.json();
-      if (json.success) {
-        toast.success(json.message);
+      const result = await uploadFiles(files);
+      if (result.success) {
+        toast.success(result.message || "Files uploaded successfully");
         fetchMedia();
       } else {
-        toast.error(json.message || "Upload failed");
+        toast.error(result.message || "Upload failed");
       }
-    } catch {
-      toast.error("Error uploading files");
+    } catch (err: any) {
+      toast.error(err.message || "Error uploading files");
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   };
 

@@ -11,19 +11,28 @@ export const metadata = {
 };
 
 export default async function PublicBlogListPage() {
-  const [blogs, categories] = await Promise.all([
-    prisma.blog.findMany({
-      where: { status: "published" },
-      orderBy: { createdAt: "desc" },
-      include: {
-        category: true,
-      },
-    }),
-    prisma.blogCategory.findMany({
-      where: { status: "active" },
-      include: { _count: { select: { blogs: true } } },
-    }),
-  ]);
+  let blogs: any[] = [];
+  let categories: any[] = [];
+
+  try {
+    const data = await Promise.all([
+      prisma.blog.findMany({
+        where: { status: "published" },
+        orderBy: { createdAt: "desc" },
+        include: {
+          category: true,
+        },
+      }),
+      prisma.blogCategory.findMany({
+        where: { status: "active" },
+        include: { _count: { select: { blogs: true } } },
+      }),
+    ]);
+    blogs = data[0];
+    categories = data[1];
+  } catch (e) {
+    console.warn("PublicBlogListPage: Failed to load from database", e);
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 antialiased">

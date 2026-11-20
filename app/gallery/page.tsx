@@ -10,18 +10,27 @@ export const metadata = {
 };
 
 export default async function PublicGalleryPage() {
-  const [images, albums] = await Promise.all([
-    prisma.galleryImage.findMany({
-      where: { status: "published" },
-      orderBy: { displayOrder: "asc" },
-      include: { album: true },
-    }),
-    prisma.galleryAlbum.findMany({
-      where: { status: "published" },
-      orderBy: { displayOrder: "asc" },
-      include: { _count: { select: { images: true } } },
-    }),
-  ]);
+  let images: any[] = [];
+  let albums: any[] = [];
+
+  try {
+    const data = await Promise.all([
+      prisma.galleryImage.findMany({
+        where: { status: "published" },
+        orderBy: { displayOrder: "asc" },
+        include: { album: true },
+      }),
+      prisma.galleryAlbum.findMany({
+        where: { status: "published" },
+        orderBy: { displayOrder: "asc" },
+        include: { _count: { select: { images: true } } },
+      }),
+    ]);
+    images = data[0];
+    albums = data[1];
+  } catch (e) {
+    console.warn("PublicGalleryPage: Failed to load from database", e);
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 antialiased">

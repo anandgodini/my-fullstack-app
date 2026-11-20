@@ -11,6 +11,7 @@ import {
   FolderOpen,
 } from "lucide-react";
 import { toast } from "sonner";
+import { uploadFiles } from "@/src/lib/mediaUpload";
 
 interface MediaItem {
   id: string;
@@ -67,27 +68,19 @@ export default function MediaPickerModal({
     if (!files || files.length === 0) return;
 
     setUploading(true);
-    const formData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-      formData.append("files", files[i]);
-    }
-
     try {
-      const res = await fetch("/api/admin/media", {
-        method: "POST",
-        body: formData,
-      });
-      const json = await res.json();
-      if (json.success) {
-        toast.success(json.message || "Files uploaded");
+      const result = await uploadFiles(files);
+      if (result.success) {
+        toast.success(result.message || "Files uploaded");
         fetchMedia();
       } else {
-        toast.error(json.message || "Upload failed");
+        toast.error(result.message || "Upload failed");
       }
-    } catch {
-      toast.error("Network error during file upload");
+    } catch (err: any) {
+      toast.error(err.message || "Network error during file upload");
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   };
 

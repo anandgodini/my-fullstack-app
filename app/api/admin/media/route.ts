@@ -74,6 +74,36 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
+    const contentType = request.headers.get("content-type") || "";
+
+    // Support JSON body for files uploaded directly to Supabase / cloud storage
+    if (contentType.includes("application/json")) {
+      const body = await request.json();
+      const filesToSave = Array.isArray(body) ? body : body.files ? body.files : [body];
+
+      const savedMedia = [];
+      for (const item of filesToSave) {
+        if (!item.fileUrl || !item.fileName) continue;
+        const mediaRecord = await prisma.media.create({
+          data: {
+            fileName: item.fileName,
+            fileUrl: item.fileUrl,
+            mimeType: item.mimeType || "application/octet-stream",
+            fileSize: item.fileSize || 0,
+            title: item.title || item.fileName.split(".")[0],
+            altText: item.altText || item.fileName.split(".")[0],
+          },
+        });
+        savedMedia.push(mediaRecord);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Registered ${savedMedia.length} media item(s)`,
+        data: savedMedia,
+      });
+    }
+
     const formData = await request.formData();
     const files = formData.getAll("files") as File[];
 

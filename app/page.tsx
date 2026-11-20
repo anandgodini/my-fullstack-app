@@ -16,43 +16,53 @@ import {
 } from "lucide-react";
 
 export default async function HomePage() {
-  const [
-    featuredBlogs,
-    testimonials,
-    faqs,
-    teamMembers,
-    galleryImages,
-    siteSettings,
-  ] = await Promise.all([
-    prisma.blog.findMany({
-      where: { status: "published" },
-      take: 3,
-      orderBy: { createdAt: "desc" },
-      include: { category: true },
-    }),
-    prisma.testimonial.findMany({
-      where: { isPublished: true },
-      take: 3,
-      orderBy: { displayOrder: "asc" },
-    }),
-    prisma.fAQ.findMany({
-      where: { isPublished: true },
-      take: 4,
-      orderBy: { displayOrder: "asc" },
-    }),
-    prisma.teamMember.findMany({
-      where: { isActive: true },
-      take: 4,
-      orderBy: { displayOrder: "asc" },
-      include: { department: true },
-    }),
-    prisma.galleryImage.findMany({
-      where: { status: "published" },
-      take: 6,
-      orderBy: { displayOrder: "asc" },
-    }),
-    prisma.siteSetting.findMany(),
-  ]);
+  let featuredBlogs: any[] = [];
+  let testimonials: any[] = [];
+  let faqs: any[] = [];
+  let teamMembers: any[] = [];
+  let galleryImages: any[] = [];
+  let siteSettings: any[] = [];
+
+  try {
+    const data = await Promise.all([
+      prisma.blog.findMany({
+        where: { status: "published" },
+        take: 3,
+        orderBy: { createdAt: "desc" },
+        include: { category: true },
+      }),
+      prisma.testimonial.findMany({
+        where: { isPublished: true },
+        take: 3,
+        orderBy: { displayOrder: "asc" },
+      }),
+      prisma.fAQ.findMany({
+        where: { isPublished: true },
+        take: 4,
+        orderBy: { displayOrder: "asc" },
+      }),
+      prisma.teamMember.findMany({
+        where: { isActive: true },
+        take: 4,
+        orderBy: { displayOrder: "asc" },
+        include: { department: true },
+      }),
+      prisma.galleryImage.findMany({
+        where: { status: "published" },
+        take: 6,
+        orderBy: { displayOrder: "asc" },
+      }),
+      prisma.siteSetting.findMany(),
+    ]);
+    featuredBlogs = data[0];
+    testimonials = data[1];
+    faqs = data[2];
+    teamMembers = data[3];
+    galleryImages = data[4];
+    siteSettings = data[5];
+  } catch (e) {
+    console.warn("HomePage: Unable to fetch data from database, using fallback values", e);
+  }
 
   const settingsMap: Record<string, string> = {};
   for (const s of siteSettings) {

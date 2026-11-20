@@ -111,9 +111,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "No files provided" }, { status: 400 });
     }
 
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    await fs.mkdir(uploadDir, { recursive: true });
-
     const savedMedia = [];
 
     for (const file of files) {
@@ -127,20 +124,18 @@ export async function POST(request: Request) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      // Create unique sanitized filename
+      // Convert buffer to Base64 data URL so it's permanently stored in Postgres
+      // and doesn't fail on Vercel's read-only ephemeral filesystem
+      const base64 = buffer.toString("base64");
+      const dataUrl = `data:${file.type};base64,${base64}`;
+
       const originalExt = path.extname(file.name).toLowerCase();
       const baseName = path.basename(file.name, originalExt).replace(/[^a-zA-Z0-9_-]/g, "_");
-      const uniqueFileName = `${Date.now()}-${baseName}${originalExt}`;
-      const filePath = path.join(uploadDir, uniqueFileName);
-
-      await fs.writeFile(filePath, buffer);
-
-      const fileUrl = `/uploads/${uniqueFileName}`;
 
       const mediaRecord = await prisma.media.create({
         data: {
           fileName: file.name,
-          fileUrl,
+          fileUrl: dataUrl,
           mimeType: file.type,
           fileSize: file.size,
           title: baseName.replace(/_/g, " "),

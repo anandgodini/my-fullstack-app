@@ -105,7 +105,12 @@ export default function MediaLibraryPage() {
   };
 
   const copyUrl = (url: string, id: string) => {
-    navigator.clipboard.writeText(window.location.origin + url);
+    const finalUrl = url.startsWith("data:")
+      ? `${window.location.origin}/api/media/${id}`
+      : url.startsWith("http")
+      ? url
+      : `${window.location.origin}${url}`;
+    navigator.clipboard.writeText(finalUrl);
     setCopiedId(id);
     toast.success("URL copied to clipboard");
     setTimeout(() => setCopiedId(null), 2000);

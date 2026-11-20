@@ -207,7 +207,10 @@ export default function MediaPickerModal({
               disabled={!selectedItem}
               onClick={() => {
                 if (selectedItem) {
-                  onSelect(selectedItem.fileUrl, selectedItem);
+                  const selectedUrl = selectedItem.fileUrl.startsWith("data:")
+                    ? `/api/media/${selectedItem.id}`
+                    : selectedItem.fileUrl;
+                  onSelect(selectedUrl, selectedItem);
                   onClose();
                 }
               }}

@@ -13,27 +13,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/contact`, lastModified: new Date() },
   ];
 
-  // Dynamic published blogs
-  const blogs = await prisma.blog.findMany({
-    where: { status: "published" },
-    select: { slug: true, updatedAt: true },
-  });
+  try {
+    // Dynamic published blogs
+    const blogs = await prisma.blog.findMany({
+      where: { status: "published" },
+      select: { slug: true, updatedAt: true },
+    });
 
-  const blogRoutes: MetadataRoute.Sitemap = blogs.map((b) => ({
-    url: `${baseUrl}/blogs/${b.slug}`,
-    lastModified: b.updatedAt,
-  }));
+    const blogRoutes: MetadataRoute.Sitemap = blogs.map((b) => ({
+      url: `${baseUrl}/blogs/${b.slug}`,
+      lastModified: b.updatedAt,
+    }));
 
-  // Dynamic published CMS Pages
-  const pages = await prisma.cMSPage.findMany({
-    where: { status: "published" },
-    select: { slug: true, updatedAt: true },
-  });
+    // Dynamic published CMS Pages
+    const pages = await prisma.cMSPage.findMany({
+      where: { status: "published" },
+      select: { slug: true, updatedAt: true },
+    });
 
-  const pageRoutes: MetadataRoute.Sitemap = pages.map((p) => ({
-    url: `${baseUrl}/${p.slug}`,
-    lastModified: p.updatedAt,
-  }));
+    const pageRoutes: MetadataRoute.Sitemap = pages.map((p) => ({
+      url: `${baseUrl}/${p.slug}`,
+      lastModified: p.updatedAt,
+    }));
 
-  return [...staticRoutes, ...blogRoutes, ...pageRoutes];
+    return [...staticRoutes, ...blogRoutes, ...pageRoutes];
+  } catch (error) {
+    console.warn("Database not yet migrated or populated during static prerender, returning static routes.", error);
+    return staticRoutes;
+  }
 }

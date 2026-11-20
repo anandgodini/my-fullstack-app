@@ -1,7 +1,7 @@
 import express from "express";
 import "dotenv/config";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StreamableHttpTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -329,7 +329,7 @@ app.get("/health", (req, res) => {
 // Streamable HTTP endpoint for MCP clients
 app.all("/mcp", async (req, res) => {
   const server = createMcpServer();
-  const transport = new StreamableHttpTransport({
+  const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: () => `session-${Date.now()}`,
   });
   await server.connect(transport);

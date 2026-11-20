@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "fullstack-cms-http": {
+      "url": "http://localhost:3100/mcp"
+    },
+    "fullstack-cms-stdio": {
+      "command": "npx",
+      "args": ["tsx", "mcp-server/index.ts"]
+    }
+  }
+}

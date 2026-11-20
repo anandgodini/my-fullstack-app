@@ -8,6 +8,8 @@
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
+/.agents/
+/.claude/
 !.yarn/versions
 
 # testing
